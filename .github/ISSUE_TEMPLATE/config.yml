@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Suporte da Comunidade rAthena
+    url: https://rathena.org/board/forum/3-support-releases/
+    about: Por favor, faça perguntas e responda dúvidas aqui em nosso fórum.
+  - name: Discord do rAthena
+    url: https://rathena.org/board/discord/
+    about: Converse conosco no canal de suporte do Discord.

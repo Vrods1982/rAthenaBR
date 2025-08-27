@@ -1,0 +1,48 @@
+name: Compilar servidores com MSVS
+# build_servers_msbuild.yml
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      # Sempre acione todas as ações do GitHub se uma ação ou algo relacionado à CI for alterado
+      - '.github/workflows/**'
+      - 'tools/ci/**'
+      # Este workflow deve ser executado quando um arquivo em um diretório de código-fonte for modificado.
+      - 'src/**'
+      - '3rdparty/**'
+
+jobs:
+  build:
+    # O GitHub Actions verifica por '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]' ou '[actions skip]', mas não versões com hífen.
+    # É uma verificação geral caso um Pull Request seja aberto e alguém esteja no modo automático.
+    if: "!contains(github.event.head_commit.message, 'ci-skip')"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+          # O rótulo windows-latest atualmente aponta para windows-2019.
+          # Disponíveis: windows-2016, windows-2019 e windows-2022
+          os: [windows-latest]
+          # Executamos verificações de compilação para Renovação e Pré-Renovação
+          mode: ['PRE', 'RE']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Adicionar msbuild ao PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Compilar solução em modo Debug (Pré-Renovação)
+        if: ${{ matrix.mode == 'PRE' }}
+        run: msbuild rAthena.sln -t:rebuild -property:Configuration=Debug /p:DefineConstants="BUILDBOT%3BPRERE" /warnaserror
+
+      - name: Compilar solução em modo Debug (Renovação)
+        if: ${{ matrix.mode == 'RE' }}
+        run: msbuild rAthena.sln -t:rebuild -property:Configuration=Debug /p:DefineConstants="BUILDBOT" /warnaserror

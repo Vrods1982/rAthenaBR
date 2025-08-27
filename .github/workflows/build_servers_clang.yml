@@ -1,0 +1,54 @@
+name: Compilar servidores com Clang
+# build_servers_clang.yml
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      # Sempre acione todas as ações do GitHub se uma ação ou algo relacionado à CI for alterado
+      - '.github/workflows/**'
+      - 'tools/ci/**'
+      # Este workflow deve ser executado quando um arquivo em um diretório de código-fonte for modificado.
+      - 'src/**'
+      - '3rdparty/**'
+
+jobs:
+  build:
+    # O GitHub Actions verifica por '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]' ou '[actions skip]', mas não versões com hífen.
+    # É uma verificação geral caso um Pull Request seja aberto e alguém esteja no modo automático.
+    if: "!contains(github.event.head_commit.message, 'ci-skip')"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+          # O rótulo ubuntu-latest atualmente aponta para ubuntu-24.04.
+          # Disponíveis: ubuntu-24.04, ubuntu-22.04
+          os: [ubuntu-22.04]
+          # Lista de versões disponível em https://github.com/marketplace/actions/install-clang
+          clang: ['13','14','15','16','17','18','19','20']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: ${{ matrix.clang }}
+          platform: x64
+
+      - name: Comando - configurar
+        env:
+            CONFIGURE_FLAGS: 'CC=clang-${{ matrix.clang }} CXX=clang++-${{ matrix.clang }} --enable-buildbot=yes'
+        run: ./configure $CONFIGURE_FLAGS
+
+      - name: Comando - make clean
+        run: make clean
+
+      - name: Comando - make all
+        run: make all

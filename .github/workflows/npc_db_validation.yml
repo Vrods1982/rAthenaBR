@@ -1,0 +1,87 @@
+name: Validar Scripts de NPC e Alterações no Banco de Dados
+# npc_db_validation.yml
+
+# Para validação de NPCs e banco de dados, só precisamos de duas compilações: uma para Renovação e outra para Pré-Renovação.
+# Scripts de NPC e arquivos de banco de dados não são dependentes da plataforma, então podemos realizar essa validação usando apenas uma configuração simples em Linux.
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      # Sempre acione todas as ações do GitHub se uma ação ou algo relacionado à CI for alterado
+      - '.github/workflows/**'
+      - 'tools/ci/**'
+      # Este workflow deve ser executado quando um arquivo nos diretórios db/ ou npc/ for modificado.
+      - 'db/**'
+      - 'npc/**'
+
+jobs:
+  build:
+    # O GitHub Actions verifica por '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]' ou '[actions skip]', mas não versões com hífen.
+    # É uma verificação geral caso um Pull Request seja aberto e alguém esteja no modo automático.
+    if: "!contains(github.event.head_commit.message, 'ci-skip')"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+          # O rótulo ubuntu-latest atualmente aponta para ubuntu-24.04.
+          # Disponíveis: ubuntu-24.04, ubuntu-22.04
+          os: [ubuntu-latest]
+          # Apenas uma versão do GCC é necessária para validar scripts de NPC e alterações no banco de dados.
+          gcc: ['11']
+          # Executamos verificações de compilação para Renovação e Pré-Renovação
+          mode: ['PRE', 'RE']
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Um simples 'sim' e 'não' pode ser confuso, então usamos nomes para exibir no job atual e depois convertê-los para uso no compilador.
+      - name: Definir variável - PRE
+        if: ${{ matrix.mode == 'PRE' }} 
+        run: |
+          echo "PRERE=yes" >> $GITHUB_ENV
+      - name: Definir variável - RE
+        if: ${{ matrix.mode == 'RE' }} 
+        run: |
+          echo "PRERE=no" >> $GITHUB_ENV
+
+      - name: Atualizar e instalar pacotes
+        # Os runners Ubuntu já possuem a maioria dos pacotes que o rAthena requer para compilar.
+        # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
+        run: |
+          sudo apt update
+          sudo apt install zlib1g-dev libpcre3-dev gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
+          
+      - name: Iniciar MySQL
+        run: sudo systemctl start mysql.service
+
+      - name: Configurar banco de dados e importar dados das tabelas
+        run: ./tools/ci/sql.sh
+          
+      - name: Comando - configurar
+        env:
+            CONFIGURE_FLAGS: 'CC=gcc-${{ matrix.gcc }} CXX=g++-${{ matrix.gcc }} --enable-prere=${{ env.PRERE }} --enable-buildbot=yes'
+        run: ./configure $CONFIGURE_FLAGS
+      
+      # npc.sh ativa todos os scripts de NPC nas pastas custom e test.
+      - name: Ativar todos os NPCs para testes
+        run: ./tools/ci/npc.sh
+
+      - name: Comando - make clean
+        run: make clean
+
+      # Criar diretórios de importação
+      - name: Comando - make import
+        run: make import
+
+      - name: Comando - make map
+        run: make map
+
+      - name: Executar uma vez - map-server
+        run: ./map-server --run-once

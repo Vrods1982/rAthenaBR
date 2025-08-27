@@ -1,0 +1,81 @@
+name: Relatório de Bug  
+description: Crie uma Issue que detalhe comportamentos quebrados ou inesperados  
+labels: ["tipo:bug"]  
+body:
+  - type: input
+    id: hash
+    attributes:
+      label: Hash do rAthena
+      description: |
+        Por favor, especifique o [hash do GitHub](https://help.github.com/articles/autolinked-references-and-urls/#commit-shas) do rAthena onde você encontrou este problema.
+        Uma forma de obter o hash é digitando `git rev-parse --short HEAD` no seu console.
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Data do Cliente
+      description: Especifique a data do cliente que você está usando quando este problema ocorreu.
+      placeholder: AAAA-MM-DD
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Modo do Servidor
+      description: Especifique o modo de servidor que você está usando quando este problema ocorreu.
+      multiple: true
+      options:
+        - Pré-Renovação
+        - Renovação
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Resultado
+      description: Descreva em detalhes o problema que você encontrou.
+      placeholder: |
+        1. Neste ambiente...
+        2. Com esta configuração...
+        3. Evento acionado '...'
+        4. Erro observado...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Saída de Log Relevante
+      description: Copie e cole qualquer saída de log relevante. Isso será formatado automaticamente como código, então não é necessário usar crases.
+      render: Shell
+    validations:
+      required: false
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado Esperado
+      description: Descreva em detalhes o que você esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: howto
+    attributes:
+      label: Como Reproduzir
+      description: Se você não explicou isso na descrição do resultado, forneça um pequeno guia de como podemos reproduzir o problema.
+    validations:
+      required: true
+  - type: textarea
+    id: info
+    attributes:
+      label: Informações Oficiais
+      description: Se possível, forneça informações de servidores oficiais (kRO ou outras fontes) que provem que o resultado está incorreto. Leve em consideração que o iRO (especialmente a iRO Wiki) nem sempre é igual ao kRO.
+    validations:
+      required: true
+  - type: textarea
+    id: modifications
+    attributes:
+      label: Modificações que Podem Afetar os Resultados
+      description: |
+        Se você estiver usando modificações, especialmente em /src/, você deve descrevê-las aqui.
+        Mesmo pequenas alterações podem causar falhas. Precisamos saber o que foi personalizado.
+        Isso pode incluir configurações alteradas, valores de banco de dados modificados ou alterações externas no código-fonte.

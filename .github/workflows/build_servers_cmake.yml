@@ -1,0 +1,53 @@
+name: Compilar servidores com CMake
+# build_servers_cmake.yml
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      # Sempre acione todas as ações do GitHub se uma ação ou algo relacionado à CI for alterado
+      - '.github/workflows/**'
+      - 'tools/ci/**'
+      # Este workflow deve ser executado quando um arquivo em um diretório de código-fonte for modificado.
+      - 'src/**'
+      - '3rdparty/**'
+      # Este workflow deve ser executado sempre que um arquivo relacionado ao CMake for modificado
+      - '**/CMakeLists.txt'
+
+jobs:
+  build:
+    # O GitHub Actions verifica por '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]' ou '[actions skip]', mas não versões com hífen.
+    # É uma verificação geral caso um Pull Request seja aberto e alguém esteja no modo automático.
+    if: "!contains(github.event.head_commit.message, 'ci-skip')"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+          # O rótulo ubuntu-latest atualmente aponta para ubuntu-24.04.
+          # Disponíveis: ubuntu-24.04, ubuntu-22.04
+          os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Instalar a versão mais recente do CMake.
+      - uses: lukka/get-cmake@latest
+
+      - name: Criar diretório de build
+        run: mkdir cbuild
+
+      - name: Gerar Makefiles Unix
+        run: |
+          cd cbuild
+          cmake -G "Unix Makefiles" ..
+
+      - name: Comando - make
+        run: |
+          cd cbuild
+          make

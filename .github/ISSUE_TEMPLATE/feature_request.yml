@@ -1,0 +1,32 @@
+name: Solicitação de Funcionalidade
+description: Sugira uma ideia para este projeto
+labels: ["tipo:melhoria"]
+body:
+  - type: dropdown
+    id: missing
+    attributes:
+      label: Sua solicitação está relacionada a uma funcionalidade oficial ausente?
+      options:
+        - "Sim"
+        - "Não"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Descreva a solução que você gostaria
+      description: Forneça uma descrição clara e concisa do que você gostaria que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Descreva alternativas que você considerou
+      description: Conte-nos sobre outras soluções que você tentou ou pesquisou.
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto adicional
+      description: |
+        Há mais alguma coisa que você possa adicionar sobre a proposta?
+        Você pode querer incluir links para issues relacionadas, se ainda não o fez.

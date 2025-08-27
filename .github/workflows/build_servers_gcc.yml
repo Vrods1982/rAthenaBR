@@ -1,0 +1,61 @@
+name: Compilar servidores com GCC
+# build_servers_gcc.yml
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      # Sempre acione todas as ações do GitHub se uma ação ou algo relacionado à CI for alterado
+      - '.github/workflows/**'
+      - 'tools/ci/**'
+      # Este workflow deve ser executado quando um arquivo em um diretório de código-fonte for modificado.
+      - 'src/**'
+      - '3rdparty/**'
+
+jobs:
+  build:
+    # O GitHub Actions verifica por '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]' ou '[actions skip]', mas não versões com hífen.
+    # É uma verificação geral caso um Pull Request seja aberto e alguém esteja no modo automático.
+    if: "!contains(github.event.head_commit.message, 'ci-skip')"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+          # O rótulo ubuntu-latest atualmente aponta para ubuntu-24.04.
+          # Disponíveis: ubuntu-24.04, ubuntu-22.04
+          os: [ubuntu-latest]
+          # Versões mais antigas do GCC não estão disponíveis via listas padrão do repositório aptitude.
+          gcc: ['9', '10', '11', '12']
+          # O GCC 13 foi removido do Ubuntu 22.04, então incluímos como job separado
+          include:
+            - os: ubuntu-24.04
+              gcc: 13
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Atualizar e instalar pacotes
+        # Os runners Ubuntu já possuem a maioria dos pacotes que o rAthena requer para compilar.
+        # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
+        run: |
+          sudo apt update
+          sudo apt install zlib1g-dev libpcre3-dev gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
+
+      - name: Comando - configurar
+        env:
+            CONFIGURE_FLAGS: 'CC=gcc-${{ matrix.gcc }} CXX=g++-${{ matrix.gcc }}'
+        # -Werror: trata todos os avisos como erros
+        # -Wno-error=builtin-declaration-mismatch: evita falhas nos testes do ./configure
+        run: ./configure $CONFIGURE_FLAGS --enable-buildbot=yes CXXFLAGS='-Werror -Wno-error=builtin-declaration-mismatch'
+      
+      - name: Comando - make clean
+        run: make clean
+
+      - name: Comando - make all
+        run: make all

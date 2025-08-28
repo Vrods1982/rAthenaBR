@@ -1,4 +1,4 @@
-# Contribuindo com o rAthena
+# Contributing to rAthena
 
 
 Table of Contents

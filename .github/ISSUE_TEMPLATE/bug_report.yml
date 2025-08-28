@@ -1,81 +1,81 @@
-name: Relatório de Bug  
-description: Crie uma Issue que detalhe comportamentos quebrados ou inesperados  
-labels: ["tipo:bug"]  
+name: Bug Report
+description: Create an Issue that details broken or unexpected behaviour
+labels: ["type:bug"]
 body:
   - type: input
     id: hash
     attributes:
-      label: Hash do rAthena
+      label: rAthena Hash
       description: |
-        Por favor, especifique o [hash do GitHub](https://help.github.com/articles/autolinked-references-and-urls/#commit-shas) do rAthena onde você encontrou este problema.
-        Uma forma de obter o hash é digitando `git rev-parse --short HEAD` no seu console.
+        Please specify the rAthena [GitHub hash](https://help.github.com/articles/autolinked-references-and-urls/#commit-shas) on which you encountered this issue.
+        One way to get your hash is to type `git rev-parse --short HEAD` on your console.
     validations:
       required: true
   - type: input
     id: date
     attributes:
-      label: Data do Cliente
-      description: Especifique a data do cliente que você está usando quando este problema ocorreu.
-      placeholder: AAAA-MM-DD
+      label: Client Date
+      description: Specify the client date you are using when this Issue occured.
+      placeholder: YYYY-MM-DD
     validations:
       required: true
   - type: dropdown
     id: mode
     attributes:
-      label: Modo do Servidor
-      description: Especifique o modo de servidor que você está usando quando este problema ocorreu.
+      label: Server Mode
+      description: Specify the server-mode you are using when this Issue occured.
       multiple: true
       options:
-        - Pré-Renovação
-        - Renovação
+        - Pre-Renewal
+        - Renewal
     validations:
       required: true
   - type: textarea
     id: result
     attributes:
-      label: Resultado
-      description: Descreva em detalhes o problema que você encontrou.
+      label: Result
+      description: Describe the issue that you experienced in detail.
       placeholder: |
-        1. Neste ambiente...
-        2. Com esta configuração...
-        3. Evento acionado '...'
-        4. Erro observado...
+        1. In this environment...
+        2. With this config...
+        3. Trigger event '...'
+        4. See error...
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
-      label: Saída de Log Relevante
-      description: Copie e cole qualquer saída de log relevante. Isso será formatado automaticamente como código, então não é necessário usar crases.
+      label: Relevant Log Output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: Shell
     validations:
       required: false
   - type: textarea
     id: expected
     attributes:
-      label: Resultado Esperado
-      description: Descreva em detalhes o que você esperava que acontecesse.
+      label: Expected Result
+      description: Describe what you would expect to happen in detail.
     validations:
       required: true
   - type: textarea
     id: howto
     attributes:
-      label: Como Reproduzir
-      description: Se você não explicou isso na descrição do resultado, forneça um pequeno guia de como podemos reproduzir o problema.
+      label: How to Reproduce
+      description: If you have not stated in the description of the result already, please give us a short guide how we can reproduce your issue.
     validations:
       required: true
   - type: textarea
     id: info
     attributes:
-      label: Informações Oficiais
-      description: Se possível, forneça informações de servidores oficiais (kRO ou outras fontes) que provem que o resultado está incorreto. Leve em consideração que o iRO (especialmente a iRO Wiki) nem sempre é igual ao kRO.
+      label: Official Information
+      description: If possible, provide information from official servers (kRO or other sources) which prove that the result is wrong. Please take into account that iRO (especially iRO Wiki) is not always the same as kRO.
     validations:
       required: true
   - type: textarea
     id: modifications
     attributes:
-      label: Modificações que Podem Afetar os Resultados
+      label: Modifications that may affect results
       description: |
-        Se você estiver usando modificações, especialmente em /src/, você deve descrevê-las aqui.
-        Mesmo pequenas alterações podem causar falhas. Precisamos saber o que foi personalizado.
-        Isso pode incluir configurações alteradas, valores de banco de dados modificados ou alterações externas no código-fonte.
+        If you are using any modifications, especially in /src/, you must type them here.
+        Even the smallest changes can cause things to break. We need to know what you have customized.
+        This can be either configurations you changed, database values you changed, or even external source modifications.

@@ -1,4 +1,4 @@
-name: Analisar servidores com CodeQL
+name: Analyse servers with CodeQL
 # analysis_codeql.yml
 
 concurrency:
@@ -12,81 +12,81 @@ on:
       - master
   pull_request:
     paths:
-      # Sempre acione todas as ações do GitHub se uma ação ou algo relacionado à CI for alterado
+      # Always trigger all Github Actions if an action or something CI related was changed
       - '.github/workflows/**'
       - 'tools/ci/**'
-      # Este workflow deve ser executado quando um arquivo em um diretório de código-fonte for modificado.
+      # This workflow should run when a file in a source directory has been modified.
       - 'src/**'
       - '3rdparty/**'
 
 jobs:
   analyze:
-    # O GitHub Actions verifica por '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]' ou '[actions skip]', mas não versões com hífen.
-    # É uma verificação geral caso um Pull Request seja aberto e alguém esteja no modo automático.
+    # Github Actions checks for '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]', or '[actions skip]' but not a hyphenated version.
+    # It's a catch-all incase a Pull Request has been opened and someone is on auto-pilot.
     if: "!contains(github.event.head_commit.message, 'ci-skip')"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-          # O rótulo ubuntu-latest atualmente aponta para ubuntu-20.04.
-          # Disponíveis: ubuntu-24.04, ubuntu-22.04
+          # The ubuntu-latest label currently points to ubuntu-20.04.
+          # Available: ubuntu-24.04, ubuntu-22.04
           os: [ubuntu-latest]
-          # Versões mais antigas do GCC não estão disponíveis via listas padrão do repositório aptitude.
+          # Older versions of GCC are not available via unaltered aptitude repo lists.
           gcc: ['10']
-          # Executamos verificações de build para Renewal e Pré-Renovação
+          # We run build checks for both Renewal and PRE-Renewal
           mode: ['PRE','RE']
 
     steps:
-      - name: Clonar repositório
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Inicializa as ferramentas CodeQL para escaneamento.
-      - name: Inicializar CodeQL
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-           # CodeQL suporta [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-           # Saiba mais sobre suporte de linguagem do CodeQL em https://aka.ms/codeql-docs/language-support
+           # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
+           # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
            languages: cpp
-           # Aciona verificações de segurança e qualidade
+           # Trigger security and quality findings
            # https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
-           # TODO: Resolver os problemas e então habilitar novamente
+           # TODO: Resolve the issues and then enable it again
            #queries: +security-and-quality
 
-      # Um simples 'sim' e 'não' pode ser confuso, então usamos nomes para exibir no job atual e depois convertê-los para uso no compilador.
-      - name: Definir variável - PRE
+      # A simple 'yes' and 'no' can be confusing, so we use names to display in the current job then convert them for use in the compiler.
+      - name: Variable Parsing - PRE
         if: ${{ matrix.mode == 'PRE' }} 
         run: |
           echo "PRERE=yes" >> $GITHUB_ENV
-      - name: Definir variável - RE
+      - name: Variable Parsing - RE
         if: ${{ matrix.mode == 'RE' }} 
         run: |
           echo "PRERE=no" >> $GITHUB_ENV
 
-      - name: Atualizar e instalar pacotes
-        # Os runners Ubuntu já possuem a maioria dos pacotes que o rAthena requer para compilar.
+      - name: Update & Install packages
+        # Ubuntu runners already have most of the packages rAthena requires to build.
         # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
         run: |
           sudo apt update
           sudo apt install zlib1g-dev libpcre3-dev gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
 
-      # O Autobuild tenta compilar linguagens como C/C++, C# ou Java.
-      # Se esta etapa falhar, remova-a e execute o build manualmente (veja abaixo)
-      #- name: Compilação automática
+      # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
+      # If this step fails, then you should remove it and run the build manually (see below)
+      #- name: Autobuild
       #  uses: github/codeql-action/autobuild@v2
 
-      # ?? Se o Autobuild falhar acima, remova-o e descomente as três linhas abaixo,
-      #    modificando-as (ou adicionando mais) para compilar seu código se seu
-      #    projeto usar uma linguagem compilada
-      - name: Comando - configure
+      # ?? If the Autobuild fails above, remove it and uncomment the following
+      #    three lines and modify them (or add more) to build your code if your
+      #    project uses a compiled language
+      - name: Command - configure
         env:
             CONFIGURE_FLAGS: 'CC=gcc-${{ matrix.gcc }} CXX=g++-${{ matrix.gcc }} --enable-prere=${{ env.PRERE }} --enable-buildbot=yes'
         run: ./configure $CONFIGURE_FLAGS
 
-      - name: Comando - make clean
+      - name: Command - make clean
         run: make clean
 
-      - name: Comando - make server
+      - name: Command - make server
         run: make server
 
-      - name: Executar análise CodeQL
+      - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

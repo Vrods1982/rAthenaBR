@@ -1,4 +1,4 @@
-name: Compilar servidores em modo VIP
+name: Build servers in VIP mode
 # build_servers_vip.yml
 
 concurrency:
@@ -12,71 +12,71 @@ on:
       - master
   pull_request:
     paths:
-      # Sempre acione todas as ações do GitHub se uma ação ou algo relacionado à CI for alterado
+      # Always trigger all Github Actions if an action or something CI related was changed
       - '.github/workflows/**'
       - 'tools/ci/**'
-      # Este workflow deve ser executado quando um arquivo em um diretório de código-fonte for modificado.
+      # This workflow should run when a file in a source directory has been modified.
       - 'src/**'
       - '3rdparty/**'
 
 jobs:
   build:
-    # O GitHub Actions verifica por '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]' ou '[actions skip]', mas não versões com hífen.
-    # É uma verificação geral caso um Pull Request seja aberto e alguém esteja no modo automático.
+    # Github Actions checks for '[ci skip]', '[skip ci]', '[no ci]', '[skip actions]', or '[actions skip]' but not a hyphenated version.
+    # It's a catch-all incase a Pull Request has been opened and someone is on auto-pilot.
     if: "!contains(github.event.head_commit.message, 'ci-skip')"
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-          # O rótulo ubuntu-latest atualmente aponta para ubuntu-24.04.
-          # Disponíveis: ubuntu-24.04, ubuntu-22.04
+          # The ubuntu-latest label currently points to ubuntu-24.04.
+          # Available: ubuntu-24.04, ubuntu-22.04
           os: [ubuntu-latest]
-          # Versões mais antigas do GCC não estão disponíveis via listas padrão do repositório aptitude.
+          # Older versions of GCC are not available via unaltered aptitude repo lists.
           gcc: ['11']
-          # Executamos verificações de compilação para Renovação e Pré-Renovação
+          # We run build checks for both Renewal and PRE-Renewal
           mode: ['PRE', 'RE']
 
     steps:
       - uses: actions/checkout@v4
 
-      # Um simples 'sim' e 'não' pode ser confuso, então usamos nomes para exibir no job atual e depois convertê-los para uso no compilador.
-      - name: Definir variável - PRE
+      # A simple 'yes' and 'no' can be confusing, so we use names to display in the current job then convert them for use in the compiler.
+      - name: Variable Parsing - PRE
         if: ${{ matrix.mode == 'PRE' }} 
         run: |
           echo "PRERE=yes" >> $GITHUB_ENV
-      - name: Definir variável - RE
+      - name: Variable Parsing - RE
         if: ${{ matrix.mode == 'RE' }} 
         run: |
           echo "PRERE=no" >> $GITHUB_ENV
 
-      - name: Atualizar e instalar pacotes
-        # Os runners Ubuntu já possuem a maioria dos pacotes que o rAthena requer para compilar.
+      - name: Update & Install packages
+        # Ubuntu runners already have most of the packages rAthena requires to build.
         # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
         run: |
           sudo apt update
           sudo apt install zlib1g-dev libpcre3-dev gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
 
-      - name: Iniciar MySQL
+      - name: Start MySQL
         run: sudo systemctl start mysql.service
 
-      - name: Configurar banco de dados e importar dados das tabelas
+      - name: Setup Database and import table data
         run: ./tools/ci/sql.sh
 
-      - name: Comando - configurar
+      - name: Command - configure
         env:
             CONFIGURE_FLAGS: 'CC=gcc-${{ matrix.gcc }} CXX=g++-${{ matrix.gcc }} --enable-prere=${{ env.PRERE }} --enable-buildbot=yes --enable-vip=yes'
         run: ./configure $CONFIGURE_FLAGS
       
-      - name: Comando - make clean
+      - name: Command - make clean
         run: make clean
 
-      - name: Comando - make server
+      - name: Command - make server
         run: make server
 
-      - name: Executar uma vez - login-server
+      - name: Run Once - login-server
         run: ./login-server --run-once
 
-      - name: Executar uma vez - char-server
+      - name: Run Once - char-server
         run: ./char-server --run-once
 
-      - name: Executar uma vez - map-server
+      - name: Run Once - map-server
         run: ./map-server --run-once

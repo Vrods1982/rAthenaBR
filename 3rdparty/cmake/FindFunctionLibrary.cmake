@@ -1,18 +1,18 @@
-# - Verifica qual biblioteca é necessária para linkar uma função C
-# find_function_library( <função> <variável> [<biblioteca> ...] )
+# - Check which library is needed to link a C function
+# find_function_library( <function> <variable> [<library> ...] )
 #
-# Verifica qual biblioteca fornece a <função>.
-# Define <variável> como 0 se encontrada nas bibliotecas globais.
-# Define <variável> como o caminho da biblioteca se encontrada nas bibliotecas fornecidas.
-# Gera um FATAL_ERROR se não for encontrada.
+# Check which library provides the <function>.
+# Sets <variable> to 0 if found in the global libraries.
+# Sets <variable> to the library path if found in the provided libraries.
+# Raises a FATAL_ERROR if not found.
 #
-# As seguintes variáveis podem ser definidas antes de chamar este macro para
-# modificar a forma como a verificação é executada:
+# The following variables may be set before calling this macro to
+# modify the way the check is run:
 #
-#  CMAKE_REQUIRED_FLAGS = string de flags da linha de comando de compilação
-#  CMAKE_REQUIRED_DEFINITIONS = lista de macros a serem definidas (-DFOO=bar)
-#  CMAKE_REQUIRED_INCLUDES = lista de diretórios de inclusão
-#  CMAKE_REQUIRED_LIBRARIES = lista de bibliotecas para linkar
+#  CMAKE_REQUIRED_FLAGS = string of compile command line flags
+#  CMAKE_REQUIRED_DEFINITIONS = list of macros to define (-DFOO=bar)
+#  CMAKE_REQUIRED_INCLUDES = list of include directories
+#  CMAKE_REQUIRED_LIBRARIES = list of libraries to link
 include( CheckFunctionExists )
 
 macro( find_function_library FUNC VAR )
